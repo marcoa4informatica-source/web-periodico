@@ -49,9 +49,18 @@ puntos.forEach((p) => {
       <!-- Mapa Leaflet -->
       <div class="lg:col-span-2">
         <Map puntos={puntos} lat={lat} lng={lng} zoom={13} />
-        <p class="text-xs text-neutral-400 mt-2 text-center">
+        <p class="text-xs text-neutral-500 mt-2 text-center">
           Haz clic en cada marcador para ver la dirección
         </p>
+        <!-- Alternativa accesible al mapa para lectores de pantalla -->
+        <details class="mt-4 sr-only focus-within:not-sr-only">
+          <summary class="text-sm font-semibold text-neutral-700 cursor-pointer">Ver lista de puntos de venta (accesible)</summary>
+          <ul class="mt-3 space-y-2 text-sm text-neutral-600">
+            {puntos.map((p) => (
+              <li><strong>{p.nombre}</strong> — {p.direccion}</li>
+            ))}
+          </ul>
+        </details>
       </div>
 
       <!-- Lista agrupada por tipo -->
@@ -59,9 +68,9 @@ puntos.forEach((p) => {
         {Object.values(grupos).filter(g => g.items.length > 0).map((grupo) => (
           <div>
             <h2 class="flex items-center gap-2 font-heading font-bold text-sm text-neutral-900 uppercase tracking-wider mb-3 pb-2 border-b-2 border-accent">
-              <span>{grupo.emoji}</span>
+              <span aria-hidden="true">{grupo.emoji}</span>
               {grupo.label}
-              <span class="text-neutral-400 font-normal normal-case tracking-normal ml-auto text-xs">({grupo.items.length})</span>
+              <span class="text-neutral-600 font-normal normal-case tracking-normal ml-auto text-xs">({grupo.items.length})</span>
             </h2>
             <ul class="space-y-2">
               {grupo.items.map((p) => (

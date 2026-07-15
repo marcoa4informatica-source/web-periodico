@@ -85,6 +85,8 @@ interface Schema {
 // ── Cliente Directus ──────────────────────────────────────────────────────────
 
 const DIRECTUS_URL = import.meta.env.PUBLIC_DIRECTUS_URL || 'http://directus:8055';
+// URL pública accesible desde el navegador (puede diferir en Docker local)
+const DIRECTUS_PUBLIC_URL = import.meta.env.PUBLIC_DIRECTUS_PUBLIC_URL || DIRECTUS_URL;
 
 const client = createDirectus<Schema>(DIRECTUS_URL).with(rest());
 
@@ -92,7 +94,7 @@ const client = createDirectus<Schema>(DIRECTUS_URL).with(rest());
 
 export function getAssetUrl(fileId: string | null, params?: Record<string, string>): string | null {
   if (!fileId) return null;
-  const base = `${DIRECTUS_URL}/assets/${fileId}`;
+  const base = `${DIRECTUS_PUBLIC_URL}/assets/${fileId}`;
   if (!params) return base;
   const query = new URLSearchParams(params).toString();
   return `${base}?${query}`;

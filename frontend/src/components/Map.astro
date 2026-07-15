@@ -29,7 +29,23 @@ const { puntos, lat = 36.5933, lng = -6.2332, zoom = 13 } = Astro.props;
     var container = document.getElementById('mapa-puntos');
     if (!container || !window.L) return;
 
-    var map = window.L.map('mapa-puntos').setView([lat, lng], zoom);
+    var map = window.L.map('mapa-puntos', { zoomControl: false }).setView([lat, lng], zoom);
+
+    // Botones de zoom accesibles (reemplazan los <a href="#"> de Leaflet)
+    var zoomDiv = document.createElement('div');
+    zoomDiv.setAttribute('role', 'group');
+    zoomDiv.setAttribute('aria-label', 'Controles de zoom del mapa');
+    zoomDiv.style.cssText = 'position:absolute;top:10px;left:10px;z-index:1000;display:flex;flex-direction:column;gap:2px;';
+    var btnIn = document.createElement('button');
+    btnIn.type = 'button'; btnIn.textContent = '+'; btnIn.setAttribute('aria-label', 'Acercar mapa');
+    btnIn.style.cssText = 'width:30px;height:30px;font-size:18px;background:#fff;border:2px solid #ccc;border-radius:4px;cursor:pointer;line-height:1;';
+    btnIn.addEventListener('click', function() { map.zoomIn(); });
+    var btnOut = document.createElement('button');
+    btnOut.type = 'button'; btnOut.textContent = '−'; btnOut.setAttribute('aria-label', 'Alejar mapa');
+    btnOut.style.cssText = 'width:30px;height:30px;font-size:18px;background:#fff;border:2px solid #ccc;border-radius:4px;cursor:pointer;line-height:1;';
+    btnOut.addEventListener('click', function() { map.zoomOut(); });
+    zoomDiv.appendChild(btnIn); zoomDiv.appendChild(btnOut);
+    container.appendChild(zoomDiv);
 
     window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
