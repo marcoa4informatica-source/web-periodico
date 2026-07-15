@@ -1,0 +1,40 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getPagina } from '@/lib/directus';
+
+let pagina = null;
+try {
+  pagina = await getPagina('acerca');
+} catch {
+  // Directus no disponible
+}
+---
+
+<BaseLayout
+  title={pagina?.seo_title ?? pagina?.titulo ?? 'Acerca de nosotros'}
+  description={pagina?.seo_description ?? 'Conoce la historia y misión de nuestro periódico local'}
+>
+  <div class="container-main py-12 max-w-3xl">
+    <header class="mb-10">
+      <h1 class="section-title">{pagina?.titulo ?? 'Acerca de nosotros'}</h1>
+    </header>
+
+    {pagina?.contenido ? (
+      <div class="prose-periodico" set:html={pagina.contenido} />
+    ) : (
+      <div class="prose-periodico">
+        <p class="text-lg text-neutral-600 leading-relaxed">
+          Somos el periódico local de nuestro municipio, un medio comprometido con la información honesta,
+          cercana y útil para todos los vecinos.
+        </p>
+        <p>
+          Nuestra misión es dar voz a la actualidad local, a las personas, a las iniciativas y a los eventos
+          que forman la vida del pueblo. Creemos en el periodismo de proximidad como servicio a la comunidad.
+        </p>
+        <p>
+          Para editar este contenido, accede al panel de administración y edita la página <strong>Acerca</strong>.
+        </p>
+      </div>
+    )}
+  </div>
+</BaseLayout>

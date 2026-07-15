@@ -1,0 +1,136 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import NewsCard from '@/components/NewsCard.astro';
+import { getNoticias, getEdiciones, getImageUrl, getAssetUrl } from '@/lib/directus';
+
+const page = Number(Astro.url.searchParams.get('pagina') ?? 1);
+const PER_PAGE = 12;
+const offset = (page - 1) * PER_PAGE;
+
+let noticias = [];
+let ediciones = [];
+
+try {
+  [noticias, ediciones] = await Promise.all([
+    getNoticias(PER_PAGE + 1, offset),
+    page === 1 ? getEdiciones() : Promise.resolve([]),
+  ]);
+} catch {
+  // Directus no disponible
+}
+
+const hayMas = noticias.length > PER_PAGE;
+const noticiasPage = noticias.slice(0, PER_PAGE);
+const ultimasEdiciones = ediciones.slice(0, 4);
+---
+
+<BaseLayout title="Noticias" description="Toda la actualidad de El Puerto de Santa María">
+  <div class="container-main py-12">
+
+    <header class="mb-10">
+      <h1 class="section-title-decorated">Noticias</h1>
+      <p class="section-subtitle mt-6">La actualidad de El Puerto de Santa María</p>
+    </header>
+
+    <!-- Últimos ejemplares -->
+    {ultimasEdiciones.length > 0 && (
+      <section class="mb-14">
+        <div class="flex items-center justify-between mb-5">
+          <h2 class="font-heading font-bold text-lg text-neutral-900 flex items-center gap-2">
+            <span class="inline-block w-3 h-3 rounded-full bg-accent"></span>
+            Últimos ejemplares
+          </h2>
+          <a href="/archivo" class="text-xs font-semibold text-neutral-500 hover:text-neutral-900 transition-colors">
+            Ver todos en archivo →
+          </a>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {ultimasEdiciones.map((e) => {
+            const portadaUrl = getImageUrl(e.portada, 300, 420);
+            const pdfUrl = getAssetUrl(e.pdf_file);
+            const fecha = new Date(e.fecha_publicacion).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+            return (
+              <article class="group relative flex flex-col rounded-xl overflow-hidden shadow-sm border border-neutral-200 hover:shadow-md transition-shadow bg-white">
+                <!-- Portada -->
+                <div class="relative overflow-hidden bg-neutral-100">
+                  {portadaUrl
+                    ? <img src={portadaUrl} alt={`Portada Nº ${e.numero}`}
+                        class="w-full h-52 sm:h-60 object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                    : <div class="w-full h-52 sm:h-60 flex items-center justify-center bg-neutral-100">
+                        <svg class="w-12 h-12 text-neutral-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                      </div>
+                  }
+                  <span class="absolute top-2 left-2 bg-neutral-900 text-accent text-xs font-heading font-bold px-2 py-0.5 rounded">
+                    Nº {e.numero}
+                  </span>
+                </div>
+
+                <!-- Info + botones -->
+                <div class="p-3 flex flex-col flex-1 gap-2">
+                  <div>
+                    <p class="font-heading font-semibold text-sm text-neutral-900 leading-tight line-clamp-2">{e.titulo}</p>
+                    <p class="text-xs text-neutral-400 mt-0.5 capitalize">{fecha}</p>
+                  </div>
+                  {pdfUrl && (
+                    <a href={pdfUrl} target="_blank" rel="noopener noreferrer" download
+                       class="mt-auto inline-flex items-center justify-center gap-1.5 text-xs font-semibold bg-accent text-neutral-900 rounded px-3 py-1.5 hover:bg-accent-dark transition-colors">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                      </svg>
+                      Descargar PDF
+                    </a>
+                  )}
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+    )}
+
+    <!-- Divisor -->
+    {ultimasEdiciones.length > 0 && noticiasPage.length > 0 && (
+      <div class="flex items-center gap-4 mb-10">
+        <div class="flex-1 h-px bg-neutral-200"></div>
+        <h2 class="font-heading font-bold text-lg text-neutral-900 flex items-center gap-2">
+          <span class="inline-block w-3 h-3 rounded-full bg-accent"></span>
+          Noticias de actualidad
+        </h2>
+        <div class="flex-1 h-px bg-neutral-200"></div>
+      </div>
+    )}
+
+    <!-- Noticias de actualidad -->
+    {noticiasPage.length > 0 ? (
+      <>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {noticiasPage.map((n) => <NewsCard noticia={n} />)}
+        </div>
+
+        <nav class="flex justify-center items-center gap-4 mt-12" aria-label="Paginación">
+          {page > 1 && (
+            <a href={`/noticias?pagina=${page - 1}`} class="btn-secondary">← Anterior</a>
+          )}
+          <span class="text-sm text-neutral-500">Página {page}</span>
+          {hayMas && (
+            <a href={`/noticias?pagina=${page + 1}`} class="btn-primary">Siguiente →</a>
+          )}
+        </nav>
+      </>
+    ) : (
+      ultimasEdiciones.length === 0 && (
+        <div class="text-center py-20">
+          <svg class="w-16 h-16 text-neutral-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"/>
+          </svg>
+          <h2 class="text-xl font-heading text-neutral-600 mb-2">No hay contenido publicado todavía</h2>
+          <p class="text-neutral-400">Próximamente publicaremos las últimas noticias y ejemplares.</p>
+        </div>
+      )
+    )}
+
+  </div>
+</BaseLayout>

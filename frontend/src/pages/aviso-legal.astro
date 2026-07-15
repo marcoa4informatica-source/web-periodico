@@ -1,0 +1,17 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getPagina } from '@/lib/directus';
+
+let pagina = null;
+try { pagina = await getPagina('aviso-legal'); } catch {}
+---
+
+<BaseLayout title={pagina?.titulo ?? 'Aviso legal'} description="Aviso legal del periódico">
+  <div class="container-main py-12 max-w-3xl">
+    <h1 class="section-title">{pagina?.titulo ?? 'Aviso legal'}</h1>
+    {pagina?.contenido
+      ? <div class="prose-periodico mt-8" set:html={pagina.contenido} />
+      : <p class="text-neutral-500 mt-8">Este contenido puede editarse desde el panel de administración → Páginas → aviso-legal.</p>
+    }
+  </div>
+</BaseLayout>

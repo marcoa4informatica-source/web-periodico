@@ -1,0 +1,91 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Map from '@/components/Map.astro';
+import { getPuntosVenta, getConfiguracion } from '@/lib/directus';
+import { PUNTOS_SALAOS } from '@/lib/puntosSalaos';
+
+let puntosDirectus = [];
+let config = { nombre_periodico: 'La Sal de El Puerto', descripcion: '', logo: null, email: '', telefono: null, direccion: null };
+
+try {
+  [puntosDirectus, config] = await Promise.all([getPuntosVenta(), getConfiguracion()]);
+} catch {
+  // Directus no disponible, se usan datos estáticos
+}
+
+// Usar Directus si tiene datos, si no los estáticos
+const puntos = puntosDirectus.length > 0 ? puntosDirectus : PUNTOS_SALAOS;
+
+const lat = puntos.reduce((s, p) => s + p.latitud, 0) / puntos.length;
+const lng = puntos.reduce((s, p) => s + p.longitud, 0) / puntos.length;
+
+// Agrupar por tipo para la lista lateral
+const grupos = {
+  libreria:   { label: 'Librerías y Papelerías', emoji: '📚', items: [] },
+  bar:        { label: 'Bares y Cafeterías',     emoji: '☕', items: [] },
+  asociacion: { label: 'Asociaciones y Sedes',   emoji: '🏘️', items: [] },
+  otro:       { label: 'Otros',                  emoji: '📍', items: [] },
+};
+
+puntos.forEach((p) => {
+  const tipo = p.tipo ?? 'otro';
+  if (grupos[tipo]) grupos[tipo].items.push(p);
+  else grupos.otro.items.push(p);
+});
+---
+
+<BaseLayout title="Encuéntranos" description="Puntos de venta de La Sal de El Puerto en El Puerto de Santa María">
+  <div class="container-main py-12">
+
+    <header class="mb-10">
+      <h1 class="section-title-decorated">Puntos Salaos</h1>
+      <p class="section-subtitle mt-6">
+        Encuentra <strong>La Sal de El Puerto</strong> en {puntos.length} puntos repartidos por El Puerto de Santa María
+      </p>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+
+      <!-- Mapa Leaflet -->
+      <div class="lg:col-span-2">
+        <Map puntos={puntos} lat={lat} lng={lng} zoom={13} />
+        <p class="text-xs text-neutral-400 mt-2 text-center">
+          Haz clic en cada marcador para ver la dirección
+        </p>
+      </div>
+
+      <!-- Lista agrupada por tipo -->
+      <div class="space-y-6">
+        {Object.values(grupos).filter(g => g.items.length > 0).map((grupo) => (
+          <div>
+            <h2 class="flex items-center gap-2 font-heading font-bold text-sm text-neutral-900 uppercase tracking-wider mb-3 pb-2 border-b-2 border-accent">
+              <span>{grupo.emoji}</span>
+              {grupo.label}
+              <span class="text-neutral-400 font-normal normal-case tracking-normal ml-auto text-xs">({grupo.items.length})</span>
+            </h2>
+            <ul class="space-y-2">
+              {grupo.items.map((p) => (
+                <li class="text-sm">
+                  <p class="font-heading font-semibold text-neutral-900 leading-tight">{p.nombre}</p>
+                  <p class="text-neutral-500 text-xs mt-0.5">{p.direccion}</p>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+
+        <!-- CTA contacto -->
+        {config.email && (
+          <div class="p-4 bg-neutral-900 rounded-xl text-white">
+            <p class="text-accent text-xs font-heading font-semibold uppercase tracking-wider mb-1">¿Quieres ser punto de venta?</p>
+            <p class="text-neutral-400 text-xs mb-3 font-sans">Contacta con nosotros y te informamos.</p>
+            <a href={`mailto:${config.email}`} class="btn-primary text-xs px-4 py-2">
+              Escribir correo
+            </a>
+          </div>
+        )}
+      </div>
+
+    </div>
+  </div>
+</BaseLayout>

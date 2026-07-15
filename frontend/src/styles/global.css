@@ -1,0 +1,75 @@
+@import 'leaflet/dist/leaflet.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-neutral-50 text-neutral-800 font-sans antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-5 py-2.5 bg-accent text-neutral-900 font-heading font-bold rounded-md
+           hover:bg-accent-dark transition-colors duration-200 text-sm tracking-wide;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 px-5 py-2.5 border-2 border-primary-700 text-primary-700 font-heading font-semibold
+           rounded-md hover:bg-primary-700 hover:text-white transition-colors duration-200 text-sm;
+  }
+
+  .card {
+    @apply bg-white rounded-xl shadow-sm border border-neutral-200 overflow-hidden hover:shadow-md transition-shadow duration-200;
+  }
+
+  .section-title {
+    @apply text-2xl md:text-3xl font-heading font-bold text-neutral-900 mb-2;
+  }
+
+  .section-subtitle {
+    @apply text-neutral-600 text-sm mb-8;
+  }
+
+  .container-main {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .prose-periodico {
+    @apply prose prose-neutral max-w-none
+           prose-headings:font-heading prose-headings:text-neutral-900
+           prose-p:text-neutral-700 prose-p:leading-relaxed prose-p:font-sans
+           prose-a:text-primary-700 prose-a:no-underline hover:prose-a:underline;
+  }
+
+  /* Línea decorativa amarilla bajo los títulos de sección */
+  .section-title-decorated {
+    @apply section-title relative pb-3;
+  }
+  .section-title-decorated::after {
+    content: '';
+    @apply absolute left-0 bottom-0 w-12 h-1 bg-accent rounded-full;
+  }
+}
+
+/* Focus visible: anillo accesible para navegación por teclado (amarillo sobre oscuro) */
+:focus-visible {
+  outline: 3px solid #ffde59;
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+
+/* Leaflet map overrides */
+.leaflet-container {
+  @apply rounded-xl z-0;
+}

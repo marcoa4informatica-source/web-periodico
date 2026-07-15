@@ -1,0 +1,93 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getPagina, getConfiguracion, getAssetUrl } from '@/lib/directus';
+
+let pagina = null;
+let config = { nombre_periodico: 'El Periódico', descripcion: '', logo: null, email: '', telefono: null, direccion: null };
+try {
+  [pagina, config] = await Promise.all([getPagina('hazte-socio'), getConfiguracion()]);
+} catch {
+  // Directus no disponible
+}
+---
+
+<BaseLayout
+  title={pagina?.seo_title ?? 'Hazte socio'}
+  description={pagina?.seo_description ?? 'Apoya el periodismo local haciéndote socio de nuestro periódico'}
+>
+  <div class="container-main py-12 max-w-3xl">
+    <header class="mb-10">
+      <h1 class="section-title">{pagina?.titulo ?? 'Hazte socio'}</h1>
+      <p class="section-subtitle">Apoya el periodismo local independiente</p>
+    </header>
+
+    {pagina?.contenido ? (
+      <div class="prose-periodico" set:html={pagina.contenido} />
+    ) : (
+      <div class="space-y-8">
+        <div class="card p-6 border-l-4 border-primary-700">
+          <h2 class="font-serif text-xl font-bold text-neutral-900 mb-3">¿Por qué hacerse socio?</h2>
+          <p class="text-neutral-600 leading-relaxed">
+            Al hacerte socio contribuyes directamente a mantener viva la prensa local de nuestro municipio.
+            Un periódico independiente solo es posible con el apoyo de la comunidad a la que sirve.
+          </p>
+        </div>
+
+        <div>
+          <h2 class="font-serif text-xl font-bold text-neutral-900 mb-4">Beneficios de ser socio</h2>
+          <ul class="space-y-3">
+            {[
+              'Recibes el periódico en tu domicilio o en el punto de recogida que prefieras',
+              'Acceso anticipado a las ediciones digitales',
+              'Apoyas el periodismo local e independiente',
+              'Contribuyes a que las noticias de tu municipio sigan llegando a todos',
+            ].map((b) => (
+              <li class="flex items-start gap-3">
+                <svg class="w-5 h-5 text-primary-700 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                </svg>
+                <span class="text-neutral-700">{b}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <h2 class="font-serif text-xl font-bold text-neutral-900 mb-4">Cómo hacerse socio</h2>
+          <p class="text-neutral-600 leading-relaxed mb-4">
+            El proceso es muy sencillo. Solo tienes que ponerte en contacto con nosotros a través de cualquiera
+            de estas vías y te informaremos de todo:
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {config.email && (
+              <a href={`mailto:${config.email}`} class="card p-4 flex items-center gap-3 hover:border-primary-300 transition-colors group">
+                <div class="p-2 bg-primary-50 rounded-lg group-hover:bg-primary-100 transition-colors">
+                  <svg class="w-5 h-5 text-primary-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="text-xs text-neutral-500 font-medium">Correo electrónico</div>
+                  <div class="text-sm font-semibold text-neutral-800">{config.email}</div>
+                </div>
+              </a>
+            )}
+            {config.telefono && (
+              <a href={`tel:${config.telefono}`} class="card p-4 flex items-center gap-3 hover:border-primary-300 transition-colors group">
+                <div class="p-2 bg-primary-50 rounded-lg group-hover:bg-primary-100 transition-colors">
+                  <svg class="w-5 h-5 text-primary-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="text-xs text-neutral-500 font-medium">Teléfono</div>
+                  <div class="text-sm font-semibold text-neutral-800">{config.telefono}</div>
+                </div>
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
+</BaseLayout>

@@ -1,0 +1,72 @@
+---
+import type { PuntoVenta } from '@/lib/directus';
+import type { PuntoSalao } from '@/lib/puntosSalaos';
+
+interface Props {
+  puntos: (PuntoVenta | PuntoSalao)[];
+  lat?: number;
+  lng?: number;
+  zoom?: number;
+}
+
+const { puntos, lat = 36.5933, lng = -6.2332, zoom = 13 } = Astro.props;
+---
+
+<div id="mapa-puntos" class="w-full h-96 md:h-[520px] rounded-xl shadow-md border-2 border-neutral-200"></div>
+
+<script is:inline define:vars={{ puntos, lat, lng, zoom }}>
+(function () {
+  // Carga Leaflet CSS
+  var link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+  document.head.appendChild(link);
+
+  // Carga Leaflet JS y arranca el mapa en el callback
+  var script = document.createElement('script');
+  script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+  script.onload = function () {
+    var container = document.getElementById('mapa-puntos');
+    if (!container || !window.L) return;
+
+    var map = window.L.map('mapa-puntos').setView([lat, lng], zoom);
+
+    window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 19,
+    }).addTo(map);
+
+    var emojis = { libreria: '📚', bar: '☕', asociacion: '🏘️', otro: '📍' };
+
+    puntos.forEach(function (p) {
+      var emoji = emojis[p.tipo] || '📍';
+      var icono = window.L.divIcon({
+        className: '',
+        html: '<div style="background:#ffde59;color:#1a1a1a;border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 3px 10px rgba(0,0,0,.35);border:2.5px solid #1a1a1a;">' + emoji + '</div>',
+        iconSize:    [38, 38],
+        iconAnchor:  [19, 38],
+        popupAnchor: [0, -40],
+      });
+
+      window.L.marker([p.latitud, p.longitud], { icon: icono })
+        .addTo(map)
+        .bindPopup(
+          '<div style="min-width:180px;font-family:sans-serif;">' +
+          '<div style="background:#ffde59;margin:-12px -12px 10px;padding:10px 12px;border-radius:4px 4px 0 0;">' +
+          '<strong style="font-size:14px;color:#1a1a1a;">' + p.nombre + '</strong></div>' +
+          '<span style="font-size:12px;color:#555;">📍 ' + p.direccion + '</span>' +
+          (p.horario ? '<br><span style="font-size:11px;color:#888;margin-top:4px;display:block;">🕐 ' + p.horario + '</span>' : '') +
+          '</div>',
+          { maxWidth: 240 }
+        );
+    });
+  };
+
+  script.onerror = function () {
+    var c = document.getElementById('mapa-puntos');
+    if (c) c.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#888;font-size:14px;">No se pudo cargar el mapa. Comprueba la conexión a internet.</div>';
+  };
+
+  document.head.appendChild(script);
+})();
+</script>

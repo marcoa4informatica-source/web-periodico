@@ -1,0 +1,641 @@
+Acabo de recibir una propuesta para realizar un proyecto informático, se trata de una web para el periódico local de mi municipio, quieren algo sencillo, una idea similar a la del periódico el Topo de Sevilla, por ejemplo tienen agrupadas las ediciones en pdfs descargables por edición, la idea es tener aparte como un medio digital donde ir añadiendo noticias sueltas además de las ediciones, una sección de hazte socio donde pongamos información de como hacerse socio no con pagos ni nada. Al final yo veo hacer dos perfiles, el admin y el usuario, el admin puede añadir, editar y eliminar cualquier cosa y el usuario solo puede ver y descargar los pdfs de las ediciones. Los apartados que quiero añadir son Acerca, Archivo (Con las ediciones), Hazte socio, Encuéntranos (sería un mapa del municipio con todos los puntos de venta del periódico, que tenga la opción de añadirse más puntos por parte del admin y bueno enlace a las redes sociales típicos con los iconos. 
+
+Necesito que planteemos la mejor estructura para realizar este proyecto, usando una arquitectura que permita a los encargados del periódico usar la web de forma sencilla, he pensado en hacer un docker muy bien diseñado y que los admin puedan hacer de todo en la web y así dejarnos de wordpress pero no sé también quiero oir tu opinión
+
+
+## Mi recomendación directa
+
+Para este proyecto **yo no haría WordPress**, pero tampoco haría un panel admin desde cero. Haría esto:
+
+> **Frontend propio + CMS headless autohospedado + Docker bien montado.**
+
+La opción que mejor encaja sería:
+
+```text
+Astro / Next.js
+    ↓ consume API
+Directus CMS
+    ↓
+PostgreSQL
+    ↓
+PDFs / imágenes en almacenamiento local o S3
+    ↓
+Docker Compose + Caddy/Nginx + backups
+```
+
+Mi opción preferida para tu caso: **Astro + Directus + PostgreSQL + Docker Compose + Caddy**.
+
+Directus encaja especialmente bien porque te da un panel administrativo ya hecho, gestión de colecciones, subida de archivos, API REST/GraphQL y control de permisos sobre una base de datos SQL. Es decir: tú no tendrías que programar desde cero el típico panel para “añadir noticia”, “subir PDF”, “editar punto de venta”, etc. ([Documentación de Directus][1])
+
+---
+
+# 1. Punto importante: no necesitas “usuario” público
+
+Tu idea de dos perfiles está bien pensada, pero yo la ajustaría:
+
+| Rol                | ¿Necesita login? | Qué puede hacer                                                              |
+| ------------------ | ---------------: | ---------------------------------------------------------------------------- |
+| Visitante público  |               No | Ver noticias, ver secciones, descargar PDFs, ver mapa                        |
+| Admin / editor     |               Sí | Crear, editar, eliminar noticias, ediciones, puntos de venta, redes, páginas |
+| Superadmin técnico |               Sí | Gestionar usuarios, permisos, configuración sensible                         |
+
+Para una web de periódico local, **el lector no debería registrarse** si solo va a leer y descargar PDFs. Es fricción innecesaria.
+
+Directus permite que los datos sean privados por defecto y que tú configures qué colecciones puede leer el rol público sin autenticación. Eso te viene perfecto para exponer noticias publicadas, ediciones y puntos de venta sin abrir el panel admin. ([Documentación de Directus][2])
+
+---
+
+# 2. Arquitectura recomendada
+
+## Opción recomendada
+
+```text
+[Usuario]
+   ↓
+[Web pública - Astro]
+   ↓ API pública
+[Directus CMS]
+   ↓
+[PostgreSQL]
+   ↓
+[Storage de PDFs e imágenes]
+
+[Admin periódico]
+   ↓
+[Panel Directus /admin]
+```
+
+## Servicios en Docker
+
+```text
+docker-compose.yml
+├── frontend        Astro / Next.js
+├── cms             Directus
+├── database        PostgreSQL
+├── reverse-proxy   Caddy o Nginx
+├── backups         servicio/cron de copias
+└── optional        storage tipo MinIO si quieres simular S3
+```
+
+Docker Compose te permite definir todos esos contenedores, redes, variables y volúmenes en un único archivo `compose.yml`, lo cual es ideal para entregar el proyecto de forma reproducible. ([Docker Documentation][3])
+
+Para el proxy, **Caddy** es muy cómodo porque puede gestionar HTTPS automático y actuar como reverse proxy delante del frontend y del panel CMS. ([Caddy Web Server][4])
+
+---
+
+# 3. Stack técnico que usaría
+
+## Frontend
+
+**Astro** sería muy buena opción porque esta web es principalmente de contenido: noticias, páginas estáticas, archivo de PDFs, mapa y secciones informativas. Astro está orientado precisamente a sitios de contenido rápidos y ligeros. ([Astro][5])
+
+Usaría:
+
+```text
+Astro
+Tailwind CSS o Bootstrap
+TypeScript
+Fetch a Directus API
+SSR o generación estática según necesidad
+```
+
+También podrías usar **Next.js**, pero para este caso concreto puede ser más de lo necesario.
+
+Mi elección:
+
+```text
+Astro > Next.js > React puro
+```
+
+---
+
+## Backend / CMS
+
+Usaría **Directus**.
+
+Razones:
+
+* Panel admin ya hecho.
+* Gestión visual de colecciones.
+* Subida de PDFs e imágenes.
+* Roles y permisos.
+* API automática.
+* Base de datos SQL limpia.
+* Buena opción para que editores no técnicos gestionen contenido.
+
+Directus gestiona archivos mediante su sistema de ficheros y guarda metadatos en la colección interna `directus_files`, lo que encaja con las ediciones PDF y las imágenes de noticias. ([Documentación de Directus][6])
+
+Alternativa posible: **Strapi**. También tiene Content Manager, Media Library y RBAC, pero para tu caso veo Directus más directo si quieres una estructura de base de datos clara y una administración tipo “tabla/colecciones”. ([Strapi 5 Docs][7])
+
+---
+
+# 4. Estructura de secciones públicas
+
+La web pública podría quedar así:
+
+```text
+/
+├── Inicio
+├── Noticias
+│   ├── /noticias
+│   └── /noticias/:slug
+├── Archivo
+│   ├── /archivo
+│   └── /archivo/:anio
+├── Acerca
+├── Hazte socio
+├── Encuéntranos
+└── Contacto / redes
+```
+
+## Inicio
+
+Contenido recomendado:
+
+* Últimas noticias.
+* Última edición PDF destacada.
+* Botón “Descargar última edición”.
+* Bloque “Hazte socio”.
+* Enlaces a redes.
+* Quizá bloque de puntos de venta principales.
+
+## Noticias
+
+Cada noticia debería tener:
+
+```text
+Título
+Slug
+Entradilla / resumen
+Contenido
+Imagen destacada
+Galería opcional
+Categoría
+Autor
+Fecha de publicación
+Estado: borrador / publicada
+SEO title
+SEO description
+```
+
+## Archivo
+
+Cada edición PDF debería tener:
+
+```text
+Número de edición
+Título
+Fecha
+Año
+PDF descargable
+Portada o imagen destacada
+Descripción breve
+Estado: publicada / oculta
+```
+
+Ejemplo visual:
+
+```text
+Edición nº 42 — Junio 2026
+[Portada]
+Descargar PDF
+```
+
+## Hazte socio
+
+No necesitas pagos. Haría una página editable desde el admin con:
+
+```text
+Texto explicativo
+Beneficios
+Cómo hacerse socio
+Email / teléfono / formulario simple
+Documento descargable opcional
+```
+
+## Encuéntranos
+
+Aquí metería un mapa con puntos de venta.
+
+Usaría **Leaflet** con OpenStreetMap. Leaflet es una librería ligera para mapas interactivos y permite trabajar con marcadores, popups y capas. ([leafletjs.com][8])
+
+Ojo: si usas tiles gratuitos de OpenStreetMap, hay que respetar su política de uso, porque sus servidores de teselas tienen capacidad limitada. Para un periódico local probablemente no haya problema, pero conviene dejarlo bien hecho y con atribución correcta. ([operations.osmfoundation.org][9])
+
+Cada punto de venta tendría:
+
+```text
+Nombre del establecimiento
+Dirección
+Latitud
+Longitud
+Horario opcional
+Descripción
+Activo / inactivo
+```
+
+---
+
+# 5. Modelo de datos recomendado
+
+## Colecciones principales
+
+| Colección           | Para qué sirve                                |
+| ------------------- | --------------------------------------------- |
+| `noticias`          | Noticias digitales sueltas                    |
+| `categorias`        | Cultura, municipio, opinión, actualidad, etc. |
+| `ediciones`         | PDFs descargables por número/fecha            |
+| `paginas`           | Acerca, Hazte socio, textos legales           |
+| `puntos_venta`      | Lugares del mapa                              |
+| `redes_sociales`    | Instagram, Facebook, X, TikTok, YouTube       |
+| `configuracion_web` | Logo, nombre del periódico, email, teléfono   |
+| `autores`           | Opcional, si quieren firmar noticias          |
+| `menus`             | Opcional, si quieres menú editable            |
+| `banners`           | Opcional, para avisos o campañas              |
+
+---
+
+## Ejemplo de tabla `noticias`
+
+```text
+id
+titulo
+slug
+resumen
+contenido
+imagen_destacada
+categoria_id
+autor_id
+estado
+fecha_publicacion
+destacada
+seo_title
+seo_description
+created_at
+updated_at
+```
+
+## Ejemplo de tabla `ediciones`
+
+```text
+id
+numero
+titulo
+slug
+descripcion
+fecha_publicacion
+anio
+pdf_file
+portada
+estado
+created_at
+updated_at
+```
+
+## Ejemplo de tabla `puntos_venta`
+
+```text
+id
+nombre
+direccion
+latitud
+longitud
+descripcion
+horario
+activo
+created_at
+updated_at
+```
+
+---
+
+# 6. Panel admin: qué deberían poder hacer
+
+El admin debería tener un panel sencillo con estas opciones:
+
+```text
+Noticias
+├── Crear noticia
+├── Editar noticia
+├── Publicar / despublicar
+└── Eliminar noticia
+
+Ediciones PDF
+├── Subir nueva edición
+├── Cambiar portada
+├── Cambiar fecha
+└── Ocultar edición
+
+Puntos de venta
+├── Añadir punto
+├── Editar punto
+├── Activar / desactivar
+└── Eliminar punto
+
+Páginas
+├── Editar Acerca
+├── Editar Hazte socio
+└── Editar textos legales
+
+Redes sociales
+├── Instagram
+├── Facebook
+├── X / Twitter
+├── TikTok
+└── YouTube
+```
+
+Esto con Directus lo puedes resolver casi entero configurando colecciones, campos y permisos, sin programar un CRUD administrativo desde cero.
+
+---
+
+# 7. WordPress vs Directus vs desarrollo propio
+
+## WordPress
+
+**Lo usaría solo si:**
+
+* Presupuesto muy bajo.
+* Quieren algo rápido.
+* Les da igual depender de temas/plugins.
+* No necesitan una estructura muy personalizada.
+
+**Problema:** con el tiempo, WordPress puede convertirse en mantenimiento de plugins, actualizaciones, temas, seguridad y pequeñas chapuzas.
+
+## Desarrollo propio completo
+
+**Lo haría solo si:**
+
+* Te pagan bien.
+* Quieren algo muy a medida.
+* Hay tiempo para mantenerlo.
+* Vas a firmar mantenimiento mensual.
+
+**Problema:** tendrías que hacer login, roles, CRUD, subida de PDFs, panel admin, validaciones, seguridad, recuperación de contraseña, editor visual, etc.
+
+Para este proyecto me parece demasiado.
+
+## Directus + frontend propio
+
+**Es el punto medio ideal.**
+
+Tú haces una web limpia, rápida y personalizada, pero el panel de gestión lo delegas en una herramienta profesional. Esa sería mi recomendación.
+
+---
+
+# 8. Estructura de carpetas del proyecto
+
+```text
+periodico-local/
+├── docker-compose.yml
+├── .env
+├── README.md
+├── frontend/
+│   ├── src/
+│   │   ├── pages/
+│   │   │   ├── index.astro
+│   │   │   ├── noticias/
+│   │   │   ├── archivo/
+│   │   │   ├── acerca.astro
+│   │   │   ├── hazte-socio.astro
+│   │   │   └── encuentranos.astro
+│   │   ├── components/
+│   │   │   ├── Header.astro
+│   │   │   ├── Footer.astro
+│   │   │   ├── NewsCard.astro
+│   │   │   ├── EditionCard.astro
+│   │   │   └── Map.astro
+│   │   ├── layouts/
+│   │   ├── lib/
+│   │   │   └── directus.ts
+│   │   └── styles/
+│   └── package.json
+├── cms/
+│   └── directus/
+├── database/
+│   └── init/
+├── backups/
+│   └── scripts/
+└── proxy/
+    └── Caddyfile
+```
+
+---
+
+# 9. Docker Compose orientativo
+
+Algo así:
+
+```yaml
+services:
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      - directus
+
+  directus:
+    image: directus/directus
+    restart: unless-stopped
+    ports:
+      - "8055:8055"
+    env_file: .env
+    volumes:
+      - directus_uploads:/directus/uploads
+      - directus_extensions:/directus/extensions
+    depends_on:
+      - database
+
+  database:
+    image: postgres
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  caddy:
+    image: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./proxy/Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+      - directus
+
+volumes:
+  postgres_data:
+  directus_uploads:
+  directus_extensions:
+  caddy_data:
+  caddy_config:
+```
+
+Esto no es el archivo final de producción, pero sí la idea base.
+
+---
+
+# 10. Seguridad mínima
+
+No entregaría el proyecto sin esto:
+
+```text
+HTTPS obligatorio
+Variables sensibles en .env
+Panel admin protegido
+Contraseñas fuertes
+Backups automáticos
+Límite de tamaño para PDFs
+Roles separados
+Solo lectura pública para contenido publicado
+No exponer la base de datos al exterior
+Actualizaciones documentadas
+```
+
+También añadiría:
+
+```text
+/robots.txt
+/sitemap.xml
+SEO básico
+Política de privacidad
+Aviso legal
+Accesibilidad mínima
+Optimización de imágenes
+```
+
+---
+
+# 11. Backups
+
+Esto es clave. Un periódico va a subir PDFs y noticias. Si se pierde eso, hay problema.
+
+Haría backup de:
+
+```text
+Base de datos PostgreSQL
+PDFs subidos
+Imágenes
+.env cifrado o guardado aparte
+Caddyfile
+docker-compose.yml
+```
+
+Frecuencia recomendada:
+
+```text
+Diario: base de datos
+Diario o semanal: uploads
+Mensual: copia completa
+```
+
+Y dejaría documentado:
+
+```text
+Cómo hacer backup
+Cómo restaurarlo
+Dónde se guarda
+Cada cuánto se rota
+```
+
+---
+
+# 12. Funcionalidades MVP
+
+Para una primera versión profesional, haría esto:
+
+## MVP inicial
+
+```text
+Home
+Noticias
+Detalle de noticia
+Archivo de ediciones PDF
+Página Acerca
+Página Hazte socio
+Mapa de puntos de venta
+Redes sociales
+Panel admin
+Subida de PDFs
+Gestión de puntos de venta
+Diseño responsive
+SEO básico
+Docker desplegable
+Backups básicos
+```
+
+## Versión 2
+
+```text
+Buscador de noticias
+Filtro por categoría
+Filtro por año en archivo
+Newsletter
+Formulario de contacto
+Estadísticas de descargas
+Modo destacado para portada
+Autores
+Galerías
+Programar publicaciones
+```
+
+## Versión 3
+
+```text
+Área de socios
+Pagos
+Donaciones
+Newsletter avanzada
+Publicidad local
+Analítica propia
+Comentarios moderados
+```
+
+---
+
+# 13. Cómo se lo vendería al cliente
+
+Yo lo plantearía así:
+
+> “No os voy a montar una web cerrada donde dependáis de mí para cambiar cada cosa. La idea es crear una web pública rápida y sencilla, con un panel privado desde el que podáis subir noticias, ediciones PDF, cambiar textos, añadir puntos de venta y actualizar redes sociales. Todo quedaría preparado en Docker para que sea fácil de desplegar, mantener y copiar en caso de cambio de servidor.”
+
+Eso suena profesional y les deja claro que no es una plantilla cutre.
+
+---
+
+# 14. Mi decisión final
+
+Para este caso concreto:
+
+```text
+Frontend: Astro
+CMS: Directus
+Base de datos: PostgreSQL
+Mapa: Leaflet + OpenStreetMap
+Proxy: Caddy
+Deploy: VPS con Docker Compose
+Backups: script automatizado
+```
+
+**No haría WordPress salvo que quieran lo más barato y rápido posible.**
+**No haría todo desde cero salvo que te paguen mantenimiento y desarrollo a medida.**
+
+Tu propuesta de Docker está bien, pero la clave sería esta:
+
+> Docker sí, pero no para meter una app custom enorme innecesaria. Docker para empaquetar una arquitectura limpia: frontend + CMS + base de datos + proxy + backups.
+
+Esa sería la forma más seria, mantenible y presentable para un periódico local.
+
+[1]: https://docs.directus.io/?utm_source=chatgpt.com "Directus Docs"
+[2]: https://docs.directus.io/reference/authentication.html?utm_source=chatgpt.com "Authentication | Directus Docs"
+[3]: https://docs.docker.com/get-started/docker-concepts/running-containers/multi-container-applications/?utm_source=chatgpt.com "Multi-container applications"
+[4]: https://caddyserver.com/docs/quick-starts/reverse-proxy?utm_source=chatgpt.com "Reverse proxy quick-start — Caddy Documentation"
+[5]: https://astro.build/?utm_source=chatgpt.com "Astro"
+[6]: https://docs.directus.io/reference/files.html?utm_source=chatgpt.com "Files"
+[7]: https://docs.strapi.io/cms/features/content-manager?utm_source=chatgpt.com "Content Manager | Strapi 5 Documentation"
+[8]: https://leafletjs.com/?utm_source=chatgpt.com "Leaflet - a JavaScript library for interactive maps"
+[9]: https://operations.osmfoundation.org/policies/tiles/?utm_source=chatgpt.com "Tile Usage Policy"
