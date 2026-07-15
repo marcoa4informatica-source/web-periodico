@@ -6,6 +6,7 @@
 #   Admin:  http://localhost:8055
 #   Email:  admin@periodico.es
 #   Pass:   admin1234
+#   Stats:  http://localhost:3000  (Umami - usuario: admin / pass: umami)
 
 services:
   frontend:
@@ -19,6 +20,8 @@ services:
     environment:
       PUBLIC_DIRECTUS_URL: http://directus:8055
       PUBLIC_DIRECTUS_PUBLIC_URL: http://localhost:8055
+      PUBLIC_UMAMI_URL: http://localhost:3000
+      PUBLIC_UMAMI_WEBSITE_ID: "788bc5b3-7848-40e5-bb08-c364669cfc64"
     restart: on-failure
     depends_on:
       - directus
@@ -71,10 +74,41 @@ services:
     networks:
       - periodico_net
 
+  umami:
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgresql://umami_user:umami_pass@umami_db:5432/umami_db
+      APP_SECRET: umami_local_secret_cambiar_en_produccion
+    depends_on:
+      umami_db:
+        condition: service_healthy
+    networks:
+      - periodico_net
+
+  umami_db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: umami_db
+      POSTGRES_USER: umami_user
+      POSTGRES_PASSWORD: umami_pass
+    volumes:
+      - umami_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U umami_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - periodico_net
+
 volumes:
   postgres_data:
   directus_uploads:
   directus_extensions:
+  umami_data:
 
 networks:
   periodico_net:

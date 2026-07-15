@@ -7,6 +7,9 @@ services:
     env_file: .env
     environment:
       - PUBLIC_DIRECTUS_URL=${PUBLIC_DIRECTUS_URL}
+      - PUBLIC_DIRECTUS_PUBLIC_URL=${PUBLIC_DIRECTUS_PUBLIC_URL}
+      - PUBLIC_UMAMI_URL=${PUBLIC_UMAMI_URL}
+      - PUBLIC_UMAMI_WEBSITE_ID=${PUBLIC_UMAMI_WEBSITE_ID}
     depends_on:
       directus:
         condition: service_healthy
@@ -14,7 +17,7 @@ services:
       - periodico_net
 
   directus:
-    image: directus/directus:11
+    image: directus/directus:12.1.1
     restart: unless-stopped
     ports:
       - "8055:8055"
@@ -108,6 +111,36 @@ services:
     networks:
       - periodico_net
 
+  umami:
+    image: ghcr.io/umami-software/umami:postgresql-latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://${UMAMI_DB_USER}:${UMAMI_DB_PASSWORD}@umami_db:5432/${UMAMI_DB_NAME}
+      APP_SECRET: ${UMAMI_SECRET}
+    depends_on:
+      umami_db:
+        condition: service_healthy
+    networks:
+      - periodico_net
+
+  umami_db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${UMAMI_DB_NAME}
+      POSTGRES_USER: ${UMAMI_DB_USER}
+      POSTGRES_PASSWORD: ${UMAMI_DB_PASSWORD}
+    volumes:
+      - umami_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${UMAMI_DB_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - periodico_net
+
 volumes:
   postgres_data:
   directus_uploads:
@@ -115,6 +148,7 @@ volumes:
   caddy_data:
   caddy_config:
   backups_data:
+  umami_data:
 
 networks:
   periodico_net:

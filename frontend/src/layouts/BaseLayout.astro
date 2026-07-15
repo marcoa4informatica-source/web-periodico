@@ -49,6 +49,16 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site ?? 'https://example.
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" href="/logo.png" />
 
+    <!-- Umami Analytics (sin cookies, compatible RGPD) -->
+    {import.meta.env.PUBLIC_UMAMI_WEBSITE_ID && (
+      <script
+        async
+        defer
+        data-website-id={import.meta.env.PUBLIC_UMAMI_WEBSITE_ID}
+        src={`${import.meta.env.PUBLIC_UMAMI_URL}/script.js`}
+      ></script>
+    )}
+
     <!-- Preconnect fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
