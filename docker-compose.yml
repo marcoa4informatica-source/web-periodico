@@ -82,6 +82,11 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    env_file: .env
+    environment:
+      - DOMAIN=${DOMAIN}
+      - CMS_DOMAIN=${CMS_DOMAIN}
+      - STATS_DOMAIN=${STATS_DOMAIN}
     volumes:
       - ./proxy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data

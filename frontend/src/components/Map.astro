@@ -15,7 +15,11 @@ const { puntos, lat = 36.5933, lng = -6.2332, zoom = 13 } = Astro.props;
 <div id="mapa-puntos" class="w-full h-96 md:h-[520px] rounded-xl shadow-md border-2 border-neutral-200" role="img" aria-label="Mapa de puntos de venta de La Sal de El Puerto"></div>
 
 <!-- Datos del mapa serializados para el script -->
-<script type="application/json" id="map-data" set:text={JSON.stringify({ puntos, lat, lng, zoom })} />
+<script type="application/json" id="map-data" set:html={JSON.stringify({ puntos, lat, lng, zoom })} />
+
+<style>
+  @import 'leaflet/dist/leaflet.css';
+</style>
 
 <script>
   import L from 'leaflet';

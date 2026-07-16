@@ -62,6 +62,7 @@ export interface ConfiguracionWeb {
   email: string;
   telefono: string | null;
   direccion: string | null;
+  url_formulario_socio: string | null;
 }
 
 export interface Pagina {
