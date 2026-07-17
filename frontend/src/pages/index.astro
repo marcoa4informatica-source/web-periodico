@@ -2,18 +2,39 @@
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import NewsCard from '@/components/NewsCard.astro';
 import EditionCard from '@/components/EditionCard.astro';
-import { getNoticias, getNoticiasDestacadas, getUltimaEdicion, getAssetUrl, getImageUrl } from '@/lib/directus';
+import { getNoticias, getNoticiasDestacadas, getEdicionesDestacadas, getUltimaEdicion, getAssetUrl, getImageUrl } from '@/lib/directus';
 
-let noticiasDestacadas = [];
+let noticiaDestacada = null;
+let edicionDestacada = null;
 let noticias = [];
 let ultimaEdicion = null;
 
 try {
-  [noticiasDestacadas, noticias, ultimaEdicion] = await Promise.all([
+  const [noticiasDestacadas, edicionesDestacadas, noticiasResult, ultimaEdicionResult] = await Promise.all([
     getNoticiasDestacadas(),
+    getEdicionesDestacadas(),
     getNoticias(6),
     getUltimaEdicion(),
   ]);
+  noticias = noticiasResult;
+  ultimaEdicion = ultimaEdicionResult;
+
+  // Elegir el destacado más reciente entre noticias y ediciones
+  const ultimaNoticiaDestacada = noticiasDestacadas[0] ?? null;
+  const ultimaEdicionDestacada = edicionesDestacadas[0] ?? null;
+
+  if (ultimaNoticiaDestacada && ultimaEdicionDestacada) {
+    const fechaNoticia = new Date(ultimaNoticiaDestacada.fecha_publicacion);
+    const fechaEdicion = new Date(ultimaEdicionDestacada.fecha_publicacion);
+    if (fechaEdicion > fechaNoticia) {
+      edicionDestacada = ultimaEdicionDestacada;
+    } else {
+      noticiaDestacada = ultimaNoticiaDestacada;
+    }
+  } else {
+    noticiaDestacada = ultimaNoticiaDestacada;
+    edicionDestacada = ultimaEdicionDestacada;
+  }
 } catch {
   // Directus no disponible
 }
@@ -21,17 +42,15 @@ try {
 
 <BaseLayout title="Inicio" description="Periódico local de tu municipio. Noticias, ediciones digitales y más.">
 
-  <!-- Hero / Últimas noticias destacadas -->
+  <!-- Destacado — la noticia o edición más reciente marcada como destacada -->
   <section class="bg-white border-b-2 border-accent py-10">
     <div class="container-main">
-      {noticiasDestacadas.length > 0 ? (
-        <div class="grid grid-cols-1 gap-6">
-          <NewsCard noticia={noticiasDestacadas[0]} featured={true} />
-          {noticiasDestacadas.length > 1 && (
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              {noticiasDestacadas.slice(1).map((n) => <NewsCard noticia={n} />)}
-            </div>
-          )}
+      {noticiaDestacada ? (
+        <NewsCard noticia={noticiaDestacada} featured={true} />
+      ) : edicionDestacada ? (
+        <div>
+          <p class="text-xs font-heading font-semibold uppercase tracking-widest text-accent mb-4">Edición destacada</p>
+          <EditionCard edicion={edicionDestacada} />
         </div>
       ) : (
         <div class="text-center py-20">

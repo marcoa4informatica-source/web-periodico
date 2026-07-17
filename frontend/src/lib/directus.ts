@@ -35,6 +35,7 @@ export interface Edicion {
   pdf_file: string;
   portada: string | null;
   estado: 'publicada' | 'oculta';
+  destacada: boolean;
 }
 
 export interface PuntoVenta {
@@ -151,6 +152,17 @@ export async function getEdiciones(anio?: number): Promise<Edicion[]> {
     readItems('ediciones', {
       filter,
       sort: ['-fecha_publicacion'],
+      fields: ['*'],
+    })
+  ) as Promise<Edicion[]>;
+}
+
+export async function getEdicionesDestacadas(): Promise<Edicion[]> {
+  return client.request(
+    readItems('ediciones', {
+      filter: { estado: { _eq: 'publicada' }, destacada: { _eq: true } },
+      sort: ['-fecha_publicacion'],
+      limit: 3,
       fields: ['*'],
     })
   ) as Promise<Edicion[]>;
