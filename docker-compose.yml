@@ -3,6 +3,11 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - PUBLIC_DIRECTUS_PUBLIC_URL=${PUBLIC_DIRECTUS_PUBLIC_URL}
+        - PUBLIC_DIRECTUS_URL=${PUBLIC_DIRECTUS_URL}
+        - PUBLIC_UMAMI_URL=${PUBLIC_UMAMI_URL}
+        - PUBLIC_UMAMI_WEBSITE_ID=${PUBLIC_UMAMI_WEBSITE_ID}
     restart: unless-stopped
     env_file: .env
     environment:
