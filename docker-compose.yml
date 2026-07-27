@@ -49,7 +49,7 @@ services:
       database:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO /dev/null http://127.0.0.1:8055/server/health; ret=$?; [ $ret -eq 0 ] || [ $ret -eq 8 ]"]
+      test: ["CMD-SHELL", "wget -S -O /dev/null http://127.0.0.1:8055/server/health 2>&1 | grep -q HTTP"]
       interval: 15s
       timeout: 10s
       retries: 5
