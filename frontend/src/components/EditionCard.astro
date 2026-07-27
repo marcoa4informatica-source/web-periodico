@@ -22,7 +22,7 @@ const fecha = new Date(edicion.fecha_publicacion).toLocaleDateString('es-ES', {
       ? <img
           src={portadaUrl}
           alt={`Portada edición ${edicion.numero}`}
-          class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          class="absolute inset-0 w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
           loading="lazy"
         />
       : <div class="absolute inset-0 flex items-center justify-center bg-neutral-100">
