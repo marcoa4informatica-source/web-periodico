@@ -9,6 +9,7 @@ interface Props {
 const { edicion } = Astro.props;
 const portadaUrl = getImageUrl(edicion.portada, 300, 420);
 const pdfUrl = getAssetUrl(edicion.pdf_file);
+const pdfDownloadUrl = pdfUrl ? `${pdfUrl}?download` : null;
 const fecha = new Date(edicion.fecha_publicacion).toLocaleDateString('es-ES', {
   month: 'long', year: 'numeric',
 });
@@ -38,9 +39,9 @@ const fecha = new Date(edicion.fecha_publicacion).toLocaleDateString('es-ES', {
   <!-- Info -->
   <div class="p-5 flex flex-col flex-1">
     <h3 class="font-serif font-bold text-neutral-900 mb-1 leading-snug line-clamp-2">{edicion.titulo}</h3>
-    <p class="text-xs text-neutral-500 mb-2 capitalize">{fecha}</p>
+    <p class="text-xs text-neutral-600 mb-2 capitalize">{fecha}</p>
     {edicion.descripcion && (
-      <p class="text-sm text-neutral-500 leading-relaxed line-clamp-2 flex-1">{edicion.descripcion}</p>
+      <p class="text-sm text-neutral-600 leading-relaxed line-clamp-2 flex-1">{edicion.descripcion}</p>
     )}
 
     <!-- Botones PDF -->
@@ -60,8 +61,7 @@ const fecha = new Date(edicion.fecha_publicacion).toLocaleDateString('es-ES', {
           Leer online
         </a>
         <a
-          href={pdfUrl}
-          target="_blank"
+          href={pdfDownloadUrl!}
           rel="noopener noreferrer"
           download
           class="btn-secondary px-3 justify-center"
@@ -76,7 +76,7 @@ const fecha = new Date(edicion.fecha_publicacion).toLocaleDateString('es-ES', {
 
     <!-- Compartir -->
     <div class="flex gap-2 mt-3 pt-3 border-t border-neutral-100">
-      <span class="text-xs text-neutral-500 self-center mr-1">Compartir:</span>
+      <span class="text-xs text-neutral-600 self-center mr-1">Compartir:</span>
       <button
         type="button"
         data-share-x

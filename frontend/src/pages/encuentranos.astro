@@ -73,13 +73,28 @@ puntos.forEach((p) => {
               <span class="text-neutral-600 font-normal normal-case tracking-normal ml-auto text-xs">({grupo.items.length})</span>
             </h2>
             <ul class="space-y-2">
-              {grupo.items.map((p) => (
+              {grupo.items.slice(0, 2).map((p) => (
                 <li class="text-sm">
                   <p class="font-heading font-semibold text-neutral-900 leading-tight">{p.nombre}</p>
-                  <p class="text-neutral-500 text-xs mt-0.5">{p.direccion}</p>
+                  <p class="text-neutral-600 text-xs mt-0.5">{p.direccion}</p>
                 </li>
               ))}
             </ul>
+            {grupo.items.length > 2 && (
+              <details class="mt-2">
+                <summary class="text-xs font-semibold text-neutral-600 hover:text-accent cursor-pointer transition-colors py-1 select-none">
+                  Ver {grupo.items.length - 2} más…
+                </summary>
+                <ul class="mt-2 space-y-2">
+                  {grupo.items.slice(2).map((p) => (
+                    <li class="text-sm">
+                      <p class="font-heading font-semibold text-neutral-900 leading-tight">{p.nombre}</p>
+                      <p class="text-neutral-600 text-xs mt-0.5">{p.direccion}</p>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
           </div>
         ))}
 

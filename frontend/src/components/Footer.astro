@@ -40,10 +40,10 @@ const iconos: Record<string, string> = {
 
       <!-- Sobre el periódico — col más ancha -->
       <div class="md:col-span-5">
-        <a href="/" class="inline-block mb-5">
+        <a href="/" aria-label={config.nombre_periodico || 'La Sal de El Puerto'} class="inline-block mb-5">
           <img
             src="/logoB.png"
-            alt={config.nombre_periodico || 'La Sal de El Puerto'}
+            alt=""
             class="h-24 w-auto brightness-0 invert"
             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
           />
