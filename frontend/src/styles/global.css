@@ -49,7 +49,26 @@
     @apply prose prose-neutral max-w-none
            prose-headings:font-heading prose-headings:text-neutral-900
            prose-p:text-neutral-700 prose-p:leading-relaxed prose-p:font-sans
-           prose-a:text-primary-700 prose-a:no-underline hover:prose-a:underline;
+           prose-a:text-primary-700 prose-a:no-underline hover:prose-a:underline
+           prose-ul:list-none prose-ul:pl-0
+           prose-li:text-neutral-700 prose-li:pl-6 prose-li:relative;
+  }
+
+  .prose-periodico h2 {
+    border-left: 4px solid #ffde59;
+    padding-left: 0.75rem;
+    margin-left: -0.75rem;
+  }
+
+  .prose-periodico ul li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.55em;
+    width: 0.5rem;
+    height: 0.5rem;
+    background-color: #ffde59;
+    border-radius: 9999px;
   }
 
   /* Línea decorativa amarilla bajo los títulos de sección */
