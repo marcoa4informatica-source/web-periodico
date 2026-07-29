@@ -2,7 +2,6 @@ import {
   createDirectus,
   rest,
   readItems,
-  readItem,
   readSingleton,
 } from '@directus/sdk';
 
@@ -44,9 +43,18 @@ export interface PuntoVenta {
   direccion: string;
   latitud: number;
   longitud: number;
-  tipo: 'libreria' | 'bar' | 'asociacion' | 'otro';
+  tipo: string;
+  tipo_id: { id: number; slug: string; label: string; emoji: string; orden: number } | null;
   horario: string | null;
   activo: boolean;
+}
+
+export interface TipoPuntoVenta {
+  id: number;
+  slug: string;
+  label: string;
+  emoji: string;
+  orden: number;
 }
 
 export interface RedSocial {
@@ -79,6 +87,7 @@ interface Schema {
   noticias: Noticia[];
   ediciones: Edicion[];
   puntos_venta: PuntoVenta[];
+  tipos_punto_venta: TipoPuntoVenta[];
   redes_sociales: RedSocial[];
   configuracion_web: ConfiguracionWeb;
   paginas: Pagina[];
@@ -181,12 +190,22 @@ export async function getUltimaEdicion(): Promise<Edicion | null> {
 }
 
 export async function getPuntosVenta(): Promise<PuntoVenta[]> {
-  return client.request(
+  const result = await client.request(
     readItems('puntos_venta', {
       filter: { activo: { _eq: true } },
+      fields: ['*', { tipo_id: ['id', 'slug', 'label', 'emoji', 'orden'] }] as unknown as any,
+    })
+  );
+  return result as unknown as PuntoVenta[];
+}
+
+export async function getTiposPuntoVenta(): Promise<TipoPuntoVenta[]> {
+  return client.request(
+    readItems('tipos_punto_venta', {
+      sort: ['orden'],
       fields: ['*'],
     })
-  ) as Promise<PuntoVenta[]>;
+  ) as Promise<TipoPuntoVenta[]>;
 }
 
 export async function getRedesSociales(): Promise<RedSocial[]> {

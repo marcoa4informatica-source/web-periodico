@@ -1,0 +1,102 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { getPagina, getConfiguracion } from '@/lib/directus';
+import QRCode from 'qrcode';
+
+const FORM_URL_FALLBACK = 'https://docs.google.com/forms/d/e/1FAIpQLSdVPmsO48w8oqNTxaI-y_y402bkzXFSIosM4NmVQa3Q_SzTeg/viewform';
+
+let pagina = null;
+let config = { nombre_periodico: 'El Periódico', descripcion: '', logo: null, email: '', telefono: null, direccion: null, url_formulario_socio: null };
+try {
+  [pagina, config] = await Promise.all([getPagina('unete'), getConfiguracion()]);
+} catch {
+  // Directus no disponible
+}
+
+const FORM_URL = config.url_formulario_socio || FORM_URL_FALLBACK;
+
+const qrDataUrl = await QRCode.toDataURL(FORM_URL, {
+  margin: 2,
+  width: 128,
+  color: { dark: '#1a1a1a', light: '#ffffff' },
+});
+---
+
+<BaseLayout
+  title={pagina?.seo_title ?? 'Únete a La Sal'}
+  description={pagina?.seo_description ?? 'Apoya el periodismo local uniéndote a La Sal de El Puerto'}
+>
+  <div class="container-main py-12 max-w-3xl">
+    <header class="mb-10">
+      <h1 class="section-title">{pagina?.titulo ?? 'Únete a La Sal'}</h1>
+      <p class="section-subtitle">Apoya el periodismo local independiente</p>
+    </header>
+
+    <!-- Texto editable desde Directus -->
+    {pagina?.contenido ? (
+      <div class="prose-periodico mb-10" set:html={pagina.contenido} />
+    ) : (
+      <div class="space-y-8 mb-10">
+        <div class="card p-6 border-l-4 border-primary-700">
+          <h2 class="font-serif text-xl font-bold text-neutral-900 mb-3">¿Por qué unirte?</h2>
+          <p class="text-neutral-600 leading-relaxed">
+            Al unirte contribuyes directamente a mantener viva la prensa local de nuestro municipio.
+            Un periódico independiente solo es posible con el apoyo de la comunidad a la que sirve.
+          </p>
+        </div>
+        <div>
+          <h2 class="font-serif text-xl font-bold text-neutral-900 mb-4">Beneficios de unirte</h2>
+          <ul class="space-y-3">
+            {[
+              'Recibes el periódico en tu domicilio o en el punto de recogida que prefieras',
+              'Acceso anticipado a las ediciones digitales',
+              'Apoyas el periodismo local e independiente',
+              'Contribuyes a que las noticias de tu municipio sigan llegando a todas las personas',
+            ].map((b) => (
+              <li class="flex items-start gap-3">
+                <svg class="w-5 h-5 text-primary-700 mt-0.5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                </svg>
+                <span class="text-neutral-700">{b}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    )}
+
+    <!-- Botón y QR — siempre visibles, no editables desde Directus -->
+    <div class="space-y-6">
+      <div>
+        <a
+          href={FORM_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-3 bg-accent text-neutral-900 font-bold px-8 py-4 rounded-xl text-lg hover:bg-accent/90 transition-colors shadow-md"
+        >
+          <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          Quiero unirme
+        </a>
+      </div>
+
+      <div class="hidden sm:flex items-center gap-5 p-5 bg-neutral-50 border border-neutral-200 rounded-xl">
+        <img
+          src={qrDataUrl}
+          alt=""
+          width="128"
+          height="128"
+          class="w-32 h-32 shrink-0 rounded-lg border border-neutral-200"
+          aria-hidden="true"
+        />
+        <div>
+          <p class="font-semibold text-neutral-800 mb-1">¿Prefieres rellenarlo desde el móvil?</p>
+          <p class="text-sm text-neutral-600">
+            Escanea este código QR con la cámara de tu teléfono para abrir el formulario directamente en él.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</BaseLayout>

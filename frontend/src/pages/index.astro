@@ -50,12 +50,52 @@ try {
       {noticiaDestacada ? (
         <NewsCard noticia={noticiaDestacada} featured={true} />
       ) : edicionDestacada ? (
-        <div class="flex justify-center">
-          <div class="w-full max-w-[300px]">
-            <h2 class="text-xs font-heading font-semibold uppercase tracking-widest text-neutral-700 mb-4 text-center">Edición destacada</h2>
-            <EditionCard edicion={edicionDestacada} />
+        <article class="card group grid md:grid-cols-[200px_1fr] gap-0">
+          <div class="overflow-hidden bg-white flex items-center justify-center border-r border-neutral-100">
+            {getImageUrl(edicionDestacada.portada, 300, 420)
+              ? <img
+                  src={getImageUrl(edicionDestacada.portada, 300, 420)!}
+                  alt={`Portada edición ${edicionDestacada.numero}`}
+                  class="w-full h-56 object-contain group-hover:scale-105 transition-transform duration-300"
+                  loading="lazy"
+                />
+              : <div class="w-full h-56 flex items-center justify-center bg-neutral-100">
+                  <svg class="w-12 h-12 text-neutral-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                  </svg>
+                </div>
+            }
           </div>
-        </div>
+          <div class="p-6 md:p-8 flex flex-col justify-center">
+            <div class="flex items-center gap-3 mb-3">
+              <span class="text-xs font-bold bg-primary-700 text-white px-2.5 py-1 rounded-full">Nº {edicionDestacada.numero}</span>
+              <span class="text-xs text-neutral-600 capitalize">
+                {new Date(edicionDestacada.fecha_publicacion).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+              </span>
+            </div>
+            <h2 class="font-heading text-xl md:text-2xl font-bold text-neutral-900 mb-3 leading-snug">{edicionDestacada.titulo}</h2>
+            {edicionDestacada.descripcion && (
+              <p class="text-neutral-600 text-sm leading-relaxed line-clamp-3 mb-5">{edicionDestacada.descripcion}</p>
+            )}
+            {getAssetUrl(edicionDestacada.pdf_file) && (
+              <div class="flex gap-3 flex-wrap">
+                <a href={getAssetUrl(edicionDestacada.pdf_file)!} target="_blank" rel="noopener noreferrer" class="btn-primary">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                  </svg>
+                  Leer online
+                </a>
+                <a href={`${getAssetUrl(edicionDestacada.pdf_file)}?download`} download class="btn-secondary">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                  </svg>
+                  Descargar PDF
+                </a>
+              </div>
+            )}
+          </div>
+        </article>
       ) : (
         <div class="text-center py-20">
           <svg class="w-16 h-16 text-neutral-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -145,9 +185,9 @@ try {
     <div class="container-main text-center max-w-2xl mx-auto">
       <h2 class="section-title-decorated inline-block">Apoya el periodismo local</h2>
       <p class="text-neutral-600 leading-relaxed mb-6">
-        Somos el periódico de tu municipio. Con tu apoyo como socio ayudas a mantener viva la información local independiente.
+        Somos el periódico de tu municipio. Con tu apoyo ayudas a mantener viva la información local independiente.
       </p>
-      <a href="/hazte-socio" class="btn-primary text-base px-8 py-3">Hazte socio</a>
+      <a href="/unete" class="btn-primary text-base px-8 py-3">Únete al periódico</a>
     </div>
   </section>
 

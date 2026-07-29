@@ -1,14 +1,15 @@
 ---
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import Map from '@/components/Map.astro';
-import { getPuntosVenta, getConfiguracion } from '@/lib/directus';
+import { getPuntosVenta, getTiposPuntoVenta, getConfiguracion } from '@/lib/directus';
 import { PUNTOS_SALAOS } from '@/lib/puntosSalaos';
 
 let puntosDirectus = [];
+let tiposDirectus = [];
 let config = { nombre_periodico: 'La Sal de El Puerto', descripcion: '', logo: null, email: '', telefono: null, direccion: null };
 
 try {
-  [puntosDirectus, config] = await Promise.all([getPuntosVenta(), getConfiguracion()]);
+  [puntosDirectus, tiposDirectus, config] = await Promise.all([getPuntosVenta(), getTiposPuntoVenta(), getConfiguracion()]);
 } catch {
   // Directus no disponible, se usan datos estáticos
 }
@@ -19,19 +20,30 @@ const puntos = puntosDirectus.length > 0 ? puntosDirectus : PUNTOS_SALAOS;
 const lat = puntos.reduce((s, p) => s + p.latitud, 0) / puntos.length;
 const lng = puntos.reduce((s, p) => s + p.longitud, 0) / puntos.length;
 
-// Agrupar por tipo para la lista lateral
-const grupos = {
-  libreria:   { label: 'Librerías y Papelerías', emoji: '📚', items: [] },
-  bar:        { label: 'Bares y Cafeterías',     emoji: '☕', items: [] },
-  asociacion: { label: 'Asociaciones y Sedes',   emoji: '🏘️', items: [] },
-  otro:       { label: 'Otros',                  emoji: '📍', items: [] },
-};
+// Construir grupos dinámicamente desde Directus
+const tiposFallback = [
+  { slug: 'libreria',   label: 'Librerías y Papelerías', emoji: '📚', orden: 1 },
+  { slug: 'bar',        label: 'Bares y Cafeterías',     emoji: '☕', orden: 2 },
+  { slug: 'asociacion', label: 'Asociaciones y Sedes',   emoji: '🏘️', orden: 3 },
+  { slug: 'otro',       label: 'Otros',                  emoji: '📍', orden: 99 },
+];
+const tipos = tiposDirectus.length > 0 ? tiposDirectus : tiposFallback;
+
+const gruposMap: Record<string, { label: string; emoji: string; orden: number; items: typeof puntos }> = {};
+tipos.forEach((t) => {
+  gruposMap[t.slug] = { label: t.label, emoji: t.emoji, orden: t.orden, items: [] };
+});
 
 puntos.forEach((p) => {
-  const tipo = p.tipo ?? 'otro';
-  if (grupos[tipo]) grupos[tipo].items.push(p);
-  else grupos.otro.items.push(p);
+  const tipo = (p.tipo_id as any)?.slug ?? p.tipo ?? 'otro';
+  if (gruposMap[tipo]) {
+    gruposMap[tipo].items.push(p);
+  } else {
+    gruposMap[tipo] = { label: tipo, emoji: '📍', orden: 98, items: [p] };
+  }
 });
+
+const grupos = Object.values(gruposMap).sort((a, b) => a.orden - b.orden);
 ---
 
 <BaseLayout title="Encuéntranos" description="Puntos de venta de La Sal de El Puerto en El Puerto de Santa María">
@@ -65,7 +77,7 @@ puntos.forEach((p) => {
 
       <!-- Lista agrupada por tipo -->
       <div class="space-y-6">
-        {Object.values(grupos).filter(g => g.items.length > 0).map((grupo) => (
+        {grupos.filter(g => g.items.length > 0).map((grupo) => (
           <div>
             <h2 class="flex items-center gap-2 font-heading font-bold text-sm text-neutral-900 uppercase tracking-wider mb-3 pb-2 border-b-2 border-accent">
               <span aria-hidden="true">{grupo.emoji}</span>
