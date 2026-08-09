@@ -4,19 +4,19 @@ import { getPagina } from '@/lib/directus';
 
 let pagina = null;
 try {
-  pagina = await getPagina('acerca');
+  pagina = await getPagina('nosotras');
 } catch {
   // Directus no disponible
 }
 ---
 
 <BaseLayout
-  title={pagina?.seo_title ?? pagina?.titulo ?? 'Acerca de nosotros'}
+  title={pagina?.seo_title ?? pagina?.titulo ?? 'Nosotras'}
   description={pagina?.seo_description ?? 'Conoce la historia y misión de nuestro periódico local'}
 >
   <div class="container-main py-12 max-w-3xl">
     <header class="mb-10">
-      <h1 class="section-title">{pagina?.titulo ?? 'Acerca de nosotros'}</h1>
+      <h1 class="section-title">{pagina?.titulo ?? 'Nosotras'}</h1>
     </header>
 
     {pagina?.contenido ? (

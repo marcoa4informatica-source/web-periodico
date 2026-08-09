@@ -44,8 +44,9 @@
     }
     header @static Cache-Control "public, max-age=31536000, immutable"
 
-    # Redirigir URL antigua de hazte-socio a la nueva
+    # Redirigir URLs antiguas a las nuevas
     redir /hazte-socio /unete permanent
+    redir /acerca /nosotras permanent
 
     reverse_proxy frontend:4321
 }
