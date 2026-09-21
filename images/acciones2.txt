@@ -1,0 +1,13 @@
+
+te paso los diferentes elementos que eran necesarios para que puedas continuar tu trabajo a la hora de aplicar estilos a la web:
+- Tipografías:
+Bebas Neue es la que usamos para la letra de La Sal de El Puerto
+Montserrat es la que usamos para los titulos y subtitulos
+Source Sans 3 para cuerpo de texto
+- Color:
+el código de color amarillo que usamos es #ffde59
+- Mapa de Puntos Salaos:
+Te subido las cosas que tengo, que es el mapa de El Puerto de Santa María con los puntos específicos donde está el periódico y luego una leyenda
+con los nombres de la ubicaciones, no se si es suficiente para que ya puedas rellenar ese apartado.
+
+Con esta acción ahora lo que pretendemos es aplicar los estilos que la web demanda para que tenga esa apariencia como el periódico.
